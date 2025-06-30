@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Three.js Viewer</title>
+    <style>
+        /*―― フルスクリーンレイアウト ――*/
+        html,
+        body,
+        #viewer {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        canvas {
+            /* 余計なスクロールバー防止 */
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Three.js のキャンバスを挿すラッパー -->
+    <div id="viewer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
+    <script type="module" src="./viewer.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,12 @@
+service: craftmate-ai-app
+env: flex
+entrypoint: gunicorn -b :8080 main:app
+resources:
+  cpu: 4
+  memory_gb: 6
+  disk_size_gb: 10
+
+env_variables:
+  GCS_BUCKET_NAME: craftmate-ai
+  ALLOWED_EXTENSIONS: jpg,jpeg,png
+  BEARER_TOKEN: test

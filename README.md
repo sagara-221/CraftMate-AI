@@ -1,0 +1,127 @@
+# [CraftMate AI](https://zenn.dev/sagara22/articles/535c03c31416e7)
+
+## 1. システム概要
+
+本アプリ「CraftMate AI」は、ユーザーが画像（完成イメージ）をアップロードし、画像内の部品を自動検出・リスト化し、各部品の3Dモデル情報や部品作成手順、組み立て手順を取得・表示するWEBアプリケーション。組み立て手順ごとに3Dモデルを描画し、ユーザーが視覚的に手順を確認でき、初心者でもDIYを気軽にはじめることができることを目的とする。
+
+## 2. 機能一覧
+
+1. 画像アップロード機能
+   - ユーザーが画像ファイル（例：jpg,jpeg,png）をアップロードできる。
+2. 部品一覧表示機能
+   - アップロード画像から部品を自動検出し、部品名をリスト表示する。
+3. 3Dモデル情報表示機能
+   - 完成イメージを3Dモデルデータ（.obj）を取得し、表示する。その際に部品ごとに色を分けて表示する。
+4. 部品作成手順表示機能
+   - 各部品の作成手順を表示する。
+5. 組み立て手順・3Dモデル描画機能
+   - 組み立て手順をステップごとに表示し、各手順完了時の3DモデルをWeb上で描画。
+   - 「前へ」、「次へ」ボタンで手順・3Dモデルを移動することができる。
+6. 設計書PDFダウンロード機能  
+   - 必要な部品と作成手順、部品の組み立て手順をまとめたPDFをダウンロードボタンを押すとダウンロードすることができる。
+7. ユーザー認証機能
+    - Googleアカウントでのログインを実装する。
+    - ユーザーの認証状態を管理し、ログイン後に機能を利用可能にする。
+    - 過去のアップロード履歴を管理し、ユーザーごとに部品一覧や3Dモデル情報を保持し、再度表示できる。
+
+## 3. 画面設計（主要画面）
+
+- ログイン画面：Googleアカウントでのログイン
+- トップ画面：画像アップロードUI、部品一覧表示、3Dモデル表示、部品作成手順作成、組立手順表示
+
+## 4. システム構成
+
+- フロントエンド：Flutter, Three.jsで実装
+- バックエンド：Flask、Vertex AIを利用
+- ストレージ：Cloud Storage(3Dモデル情報等)
+- 認証：Identity-Aware Proxy
+
+## 5. データフロー
+
+以下は主要な機能のデータフローを示すシーケンス図。
+
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant FE as フロントエンド
+    participant BE as バックエンド
+
+    %% 画像アップロード・部品一覧取得
+    User->>FE: 入力ファイルをアップロード
+    FE->>BE: ファイルアップロード
+    BE-->>FE: plan_id(uuid)を返却
+    loop 部品一覧取得可能かポーリング
+        FE->>BE: plan_idをもとに部品一覧取得可能か確認
+        alt 取得可能
+            BE-->>FE: True
+            FE->>BE: 部品一覧情報を取得
+            BE-->>FE: 部品一覧を返却
+        else 取得不可能
+            BE-->>FE: False
+        end
+    end
+
+    %% 3Dモデル情報取得
+    loop 3Dモデル情報取得可能かポーリング
+        FE->>BE: plan_idをもとに3Dモデル取得可能か確認
+        alt 取得可能
+            BE-->>FE: True
+            FE->>BE: 3Dモデル情報を取得
+            BE-->>FE: 3Dモデル情報を返却
+        else 取得不可能
+            BE-->>FE: False
+        end
+    end
+
+    %% procedure_id一覧取得
+    loop procedure_id一覧取得可能かポーリング
+        FE->>BE: plan_id, part_idをもとにprocedure_id一覧取得可能か確認
+        alt 取得可能
+            BE-->>FE: True
+            FE->>BE: procedure_id一覧を取得
+            BE-->>FE: procedure_id一覧を返却
+        else 取得不可能
+            BE-->>FE: False
+        end
+    end
+    
+    %% 部品作成手順取得
+    loop 部品作成手順取得可能かポーリング
+        FE->>BE: plan_id, procedure_idをもとに作成手順取得可能か確認
+        alt 取得可能
+            BE-->>FE: True
+            FE->>BE: 部品作成手順を取得
+            BE-->>FE: 部品作成手順を返却
+        else 取得不可能
+            BE-->>FE: False
+        end
+    end
+
+    %% 組立手順・3Dモデル描画
+    loop 組立手順取得可能かポーリング
+        FE->>BE: plan_idをもとに組立手順取得可能か確認
+        alt 取得可能
+            BE-->>FE: True
+            FE->>BE: 組立手順数を取得
+            BE-->>FE: 組立手順数を返却
+            loop n番目の組立手順取得
+                FE->>BE: plan_id, procedure_idをもとにn番目の組立手順・objファイルを取得
+                BE-->>FE: n番目の組立手順・objファイルを返却
+            end
+        else 取得不可能
+            BE-->>FE: False
+        end
+    end
+
+    %% PDFダウンロード
+    loop PDF取得可能かポーリング
+        FE->>BE: plan_idをもとにPDF取得可能か確認
+        alt 取得可能
+            BE-->>FE: True
+            FE->>BE: PDFダウンロード要求
+            BE-->>FE: PDFファイル返却
+        else 取得不可能
+            BE-->>FE: False
+        end
+    end
+```

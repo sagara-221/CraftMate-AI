@@ -1,0 +1,9 @@
+.venv/
+*.env
+private/
+__pycache__/
+*.pyc
+old/
+.LocalBackend/
+tmp/
+images/

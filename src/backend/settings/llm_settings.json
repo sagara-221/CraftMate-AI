@@ -1,0 +1,60 @@
+{
+    "func_settings": {
+        "parts_detection": {
+            "model": "gemini-2.5-pro",
+            "temperature": 0,
+            "top_p": 0.5,
+            "seed": 0,
+            "max_output_tokens": 65535
+        },
+        "parts_loc_estimate": {
+            "model": "gemini-2.5-pro",
+            "temperature": 0,
+            "top_p": 0.5,
+            "seed": 0,
+            "max_output_tokens": 65535
+        },
+        "parts_making": {
+            "model": "gemini-2.5-flash-preview-05-20",
+            "temperature": 0,
+            "top_p": 0.5,
+            "seed": 0,
+            "max_output_tokens": 65535
+        },
+        "create_assembly_steps": {
+            "model": "gemini-2.5-pro",
+            "temperature": 0,
+            "top_p": 0.5,
+            "seed": 0,
+            "max_output_tokens": 65535
+        }
+    },
+    "vertex_model_settings": {
+        "model": {
+            "gemini-2.5-pro-preview-06-05": {
+                "cost_per_1000_tokens": {
+                    "input": 0.0025,
+                    "output": 0.0075
+                }
+            },
+            "gemini-2.5-flash-preview-05-20": {
+                "cost_per_1000_tokens": {
+                    "input": 0.0005,
+                    "output": 0.0015
+                }
+            },
+            "gemini-2.5-flash-lite-preview-06-17": {
+                "cost_per_1000_tokens": {
+                    "input": 0.000125,
+                    "output": 0.000375
+                }
+            },
+            "gemini-2.5-pro": {
+                "cost_per_1000_tokens": {
+                    "input": 0.0025,
+                    "output": 0.0075
+                }
+            }
+        }
+    }
+}
