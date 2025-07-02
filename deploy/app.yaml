@@ -2,9 +2,13 @@ service: craftmate-ai-app
 env: flex
 entrypoint: gunicorn -b :8080 main:app
 resources:
-  cpu: 4
-  memory_gb: 6
+  cpu: 1
+  memory_gb: 4
   disk_size_gb: 10
+
+automatic_scaling:
+  min_num_instances: 1
+  max_num_instances: 1
 
 env_variables:
   GCS_BUCKET_NAME: craftmate-ai
