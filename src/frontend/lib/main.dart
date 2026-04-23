@@ -14,6 +14,7 @@ import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'package:http_parser/http_parser.dart';
 import 'dart:typed_data';
+import 'widgets/chat_panel.dart';
 
 // ------------------------------------------------------------------
 // ▼ グローバル状態
@@ -720,6 +721,8 @@ class _MainPageState extends State<MainPage> {
 
                 if (_showViewer) ...[
                   const SizedBox(height: 12),
+                  SizedBox(height: 400, child: ChatPanel(planId: _planId!, onModelUpdated: _onModelUpdatedByChat)),
+                  const SizedBox(height: 12),
 
                   // 部品一覧 + 手順（横並び）
                   _buildPartsAndStepsSection(),
@@ -1230,6 +1233,45 @@ class _MainPageState extends State<MainPage> {
   // ----------------------------------------------------------------
   // ▼ イベントハンドラ
   // ----------------------------------------------------------------
+  Future<void> _onModelUpdatedByChat() async {
+    if (_planId == null) return;
+    try {
+      setState(() {
+        _allParts = null;
+        _partsFuture = fetchAllParts(_planId!);
+      });
+
+      final objText = await fetchAssembledModelOBJText(_planId!);
+      final modelData = await fetchAssembledModelRenderDataFromOBJ(objText);
+
+      setState(() {
+        _pendingModelData = modelData;
+        _lastAssembled = modelData;
+      });
+
+      if (_iframeElement.contentWindow != null) {
+        _iframeElement.contentWindow!.postMessage(modelData, '*');
+        _pendingModelData = null;
+      }
+
+      final pcs = await fetchPartsCreation(_planId!);
+      final totalSteps = await fetchAssemblyProcedureCount(_planId!);
+
+      setState(() {
+        _partCreationSteps = pcs;
+        _assemblyTotalSteps = totalSteps;
+        _currentStep = 0;
+        _stepCache.clear();
+      });
+
+      if (totalSteps > 0) {
+        await _loadAssemblyStep(0);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('モデル更新失敗: $e')));
+    }
+  }
+
   Future<void> _onGeneratePressed() async {
     if (_droppedImageFile == null) {
       ScaffoldMessenger.of(

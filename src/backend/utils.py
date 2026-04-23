@@ -1,7 +1,7 @@
 import uuid
 import json
 from flask import jsonify, request
-from google.cloud import storage
+from flask import jsonify, request
 import functools
 import os
 import logging
@@ -10,7 +10,7 @@ from typing import Optional
 ALLOWED_EXTENSIONS = set(
     os.environ.get("ALLOWED_EXTENSIONS", "jpg,jpeg,png").split(",")
 )
-GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "plan-craft-test-bucket")
+LOCAL_DATA_DIR = os.environ.get("LOCAL_DATA_DIR", "local_data")
 BEARER_TOKEN = os.environ.get("BEARER_TOKEN", "changeme-token")
 
 logger = logging.getLogger("llm_logger")
@@ -22,24 +22,23 @@ if not logger.hasHandlers():
     logger.setLevel(logging.INFO)
 
 
-def get_gcs_client_and_bucket(bucket_name=None):
-    if bucket_name is None:
-        bucket_name = GCS_BUCKET_NAME
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-    return client, bucket
+def get_local_dir(plan_id):
+    dir_path = os.path.join(LOCAL_DATA_DIR, plan_id)
+    os.makedirs(dir_path, exist_ok=True)
+    return dir_path
 
 
-def gcs_blob_exists(bucket, blob_path):
-    blob = bucket.blob(blob_path)
-    return blob.exists()
+def local_file_exists(plan_id, filename):
+    file_path = os.path.join(LOCAL_DATA_DIR, plan_id, filename)
+    return os.path.exists(file_path)
 
 
-def load_json_from_gcs(bucket, blob_path):
-    blob = bucket.blob(blob_path)
-    if not blob.exists():
+def load_json_from_local(plan_id, filename):
+    file_path = os.path.join(LOCAL_DATA_DIR, plan_id, filename)
+    if not os.path.exists(file_path):
         return None
-    return json.loads(blob.download_as_text())
+    with open(file_path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 
 def validate_uuid(plan_id):
@@ -96,14 +95,12 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def upload_to_gcs(file_stream, filename, content_type, bucket_name=None):
-    if bucket_name is None:
-        bucket_name = GCS_BUCKET_NAME
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(filename)
-    blob.upload_from_file(file_stream, content_type=content_type)
-    return blob.public_url
+def upload_to_local(file_stream, plan_id, filename):
+    dir_path = get_local_dir(plan_id)
+    file_path = os.path.join(dir_path, filename)
+    with open(file_path, "wb") as f:
+        f.write(file_stream.read())
+    return file_path
 
 
 def require_bearer_token(func):

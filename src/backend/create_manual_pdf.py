@@ -4,7 +4,7 @@ import plotly.io as pio
 import markdown
 from weasyprint import HTML
 import codecs
-from utils import get_gcs_client_and_bucket, load_json_from_gcs, GCS_BUCKET_NAME
+from utils import load_json_from_local, get_local_dir
 import logging
 
 # fontToolsのログをWARNING以上に制限
@@ -26,17 +26,15 @@ if not logger.hasHandlers():
 
 def read_files(plan_id: str) -> dict:
     """
-    plan_idに基づいてGCSから必要なファイルを読み込む
+    plan_idに基づいてローカルから必要なファイルを読み込む
     Args:
         plan_id (str): UUID形式のplan_id
     Returns:
         dict: 読み込んだファイルの内容を含む辞書
     """
-    _, bucket = get_gcs_client_and_bucket(GCS_BUCKET_NAME)
-
-    parts3d = load_json_from_gcs(bucket, f"{plan_id}/parts3d.json")
-    parts_manual = load_json_from_gcs(bucket, f"{plan_id}/parts_manual.json")
-    assembly_manual = load_json_from_gcs(bucket, f"{plan_id}/assembly_manual.json")
+    parts3d = load_json_from_local(plan_id, "parts3d.json")
+    parts_manual = load_json_from_local(plan_id, "parts_manual.json")
+    assembly_manual = load_json_from_local(plan_id, "assembly_manual.json")
     return {
         "plan_id": plan_id,
         "parts3d": parts3d,
@@ -202,13 +200,13 @@ def convert_markdown_to_pdf(output_md_path, output_folder):
     return pdf_path
 
 
-def upload_pdf_to_gcs(pdf_path, bucket, plan_id):
+def upload_pdf_to_local(pdf_path, plan_id):
     """
-    PDFファイルをGCSにアップロード
+    PDFファイルをローカルに保存（移動）
     """
-    blob = bucket.blob(f"{plan_id}/design_document.pdf")
-    with open(pdf_path, "rb") as f:
-        blob.upload_from_file(f, content_type="application/pdf")
+    import shutil
+    dest_path = os.path.join(get_local_dir(plan_id), "design_document.pdf")
+    shutil.copy2(pdf_path, dest_path)
 
 
 def cleanup_temp_files(
@@ -241,13 +239,12 @@ def cleanup_temp_files(
         pass
 
 
-def make_manual_pdf(plan_id: str, bucket_name: str):
+def make_manual_pdf(plan_id: str):
     """
-    GCSから3つのJSONファイルを取得し、Markdown整形→PDF保存まで行う
-    PDFはGCSの {plan_id}/design_document.pdf に保存される
+    ローカルから3つのJSONファイルを取得し、Markdown整形→PDF保存まで行う
+    PDFはローカルの {plan_id}/design_document.pdf に保存される
     Args:
         plan_id (str): プランID
-        bucket_name (str): GCSバケット名
     """
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("manual_pdf")
@@ -276,10 +273,9 @@ def make_manual_pdf(plan_id: str, bucket_name: str):
     # PDF生成
     pdf_path = convert_markdown_to_pdf(output_md_path, output_folder)
     logger.info(f"PDFファイルを作成しました: {pdf_path}")
-    # GCSへアップロード
-    _, bucket = get_gcs_client_and_bucket(bucket_name)
-    upload_pdf_to_gcs(pdf_path, bucket, plan_id)
-    logger.info(f"PDFファイルをGCSに保存しました: {plan_id}/design_document.pdf")
+    # ローカルへアップロード（移動）
+    upload_pdf_to_local(pdf_path, plan_id)
+    logger.info(f"PDFファイルをローカルに保存しました: {plan_id}/design_document.pdf")
     # 一時ファイル削除
     cleanup_temp_files(
         pdf_path,
@@ -294,4 +290,4 @@ def make_manual_pdf(plan_id: str, bucket_name: str):
 
 if __name__ == "__main__":
     plan_id = "749dae63-e297-41bf-82bc-74b5d735b8fd"
-    make_manual_pdf(plan_id, GCS_BUCKET_NAME)
+    make_manual_pdf(plan_id)

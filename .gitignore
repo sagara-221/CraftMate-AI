@@ -7,3 +7,6 @@ old/
 .LocalBackend/
 tmp/
 images/
+.credentials/
+.DS_Store
+local_data/

@@ -2,6 +2,7 @@ from google import genai
 from google.genai import types
 import os
 import json
+import logging
 from utils import load_llm_settings, print_llm_usage_and_cost
 
 llm_settings = load_llm_settings()
@@ -58,11 +59,13 @@ def detect_parts_location_from_bytes(
             "properties": {"response": {"type": "STRING"}},
         },
     )
+    logging.info(f"3D Estimation: calling generate_content with model {model}...")
     response = client.models.generate_content(
         model=model,
         contents=contents,
         config=generate_content_config,
     )
+    logging.info("3D Estimation: received response.")
     # トークン数・費用の出力
     if hasattr(response, "usage_metadata") and response.usage_metadata:
         prompt_tokens = getattr(response.usage_metadata, "prompt_token_count", None)

@@ -33,9 +33,9 @@ dependencies:
   http: ^1.4.0
   http_parser: ^4.0.2
   dotted_border: ^2.1.0     # 破線ドロップ枠
-  google_fonts: ^6.2.1      # タイトル用フォント（任意）
-  flutter_dotenv: ^5.1.0
-  pointer_interceptor: ^0.9.3
+  google_fonts: ^8.0.2      # タイトル用フォント（任意）
+  flutter_dotenv: ^6.0.1
+  pointer_interceptor: ^0.10.1+2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -50,7 +50,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
